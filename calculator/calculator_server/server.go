@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"grpc_go/greetings/calculator/calculatorpb"
+	"io"
 	"log"
 	"net"
 
@@ -12,6 +13,31 @@ import (
 
 type server struct {
 	calculatorpb.UnimplementedCalculatorServiceServer
+}
+
+func (*server) ComputeAverage(stream calculatorpb.CalculatorService_ComputeAverageServer) error {
+	fmt.Printf("Received ComputerAverage RPC\n")
+
+	sum := int32(0)
+	count := int32(0)
+
+	for {
+		req, err := stream.Recv()
+		if err == io.EOF {
+			average := float64(sum) / float64(count)
+			return stream.SendAndClose(&calculatorpb.ComputeAverageResponse{
+				Result: average,
+			})
+		}
+
+		if err != nil {
+			log.Fatalf("Error while reading stream: %v", err)
+		}
+
+		sum += req.GetNumber()
+		count++
+	}
+
 }
 
 func (*server) PrimeNumberDecomposition(
@@ -53,7 +79,7 @@ func main() {
 
 	fmt.Println("Calculator Server")
 
-	lis, err := net.Listen("tcp", "0.0.0.0:50056")
+	lis, err := net.Listen("tcp", "0.0.0.0:50053")
 
 	if err != nil {
 		log.Fatalf("Failed to listen: %v", err)

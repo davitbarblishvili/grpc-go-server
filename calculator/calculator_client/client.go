@@ -13,7 +13,7 @@ import (
 
 func main() {
 	fmt.Println("Calculator Client")
-	cc, err := grpc.Dial("localhost:50056", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	cc, err := grpc.Dial("localhost:50053", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("Could not connect: %v\n", err)
 	}
@@ -23,12 +23,39 @@ func main() {
 	c := calculatorpb.NewCalculatorServiceClient(cc)
 
 	//doUnary(c)
+	//doServerStreaming(c)
 
-	doServerStreaming(c)
+	doClientStreaming(c)
+}
+
+func doClientStreaming(c calculatorpb.CalculatorServiceClient) {
+	fmt.Println("Starting to do a ComputeAverage Client Streaming RPC")
+
+	requests := []int32{1, 2, 3, 4, 5}
+	stream, err := c.ComputeAverage(context.Background())
+
+	if err != nil {
+		log.Fatalf("Error while calling ComputeAverage RPC: %v", err)
+	}
+
+	for _, req := range requests {
+		fmt.Printf("Sending request: %v\n", req)
+		stream.Send(&calculatorpb.ComputeAverageRequest{
+			Number: req,
+		})
+
+	}
+
+	resp, err := stream.CloseAndRecv()
+	if err != nil {
+		log.Fatalf("Error while receiving response from ComputeAverage: %v", err)
+	}
+	fmt.Printf("ComputeAverage response: %v\n", resp.GetResult())
+
 }
 
 func doServerStreaming(c calculatorpb.CalculatorServiceClient) {
-	fmt.Println("Starting to do a PrimeDecomposition Server Streaming RPC")
+	fmt.Println("Starting to do a PrimeDecomposition Client Streaming RPC")
 	req := &calculatorpb.PrimeNumberDecompositionRequest{
 		Number: 48,
 	}
