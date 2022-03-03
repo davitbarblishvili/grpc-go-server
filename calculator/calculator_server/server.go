@@ -14,6 +14,28 @@ type server struct {
 	calculatorpb.UnimplementedCalculatorServiceServer
 }
 
+func (*server) PrimeNumberDecomposition(
+	req *calculatorpb.PrimeNumberDecompositionRequest,
+	stream calculatorpb.CalculatorService_PrimeNumberDecompositionServer) error {
+	fmt.Printf("Received PrimeNumberDecomposition RPC: %v\n", req)
+	number := req.GetNumber()
+	divisor := int64(2)
+
+	for number > 1 {
+		if number%divisor == 0 {
+			stream.Send(&calculatorpb.PrimeNumberDecompositionResponse{
+				PrimeFactor: divisor,
+			})
+			number = number / divisor
+		} else {
+			divisor++
+			fmt.Printf("Divisior has increased to  %v\n", divisor)
+		}
+	}
+	return nil
+
+}
+
 func (*server) Sum(ctx context.Context, req *calculatorpb.SumRequest) (*calculatorpb.SumResponse, error) {
 	fmt.Printf("Received Sum RPC: %v", req)
 	firstNumber := req.FirstNumber
@@ -31,7 +53,7 @@ func main() {
 
 	fmt.Println("Calculator Server")
 
-	lis, err := net.Listen("tcp", "0.0.0.0:50051")
+	lis, err := net.Listen("tcp", "0.0.0.0:50056")
 
 	if err != nil {
 		log.Fatalf("Failed to listen: %v", err)
