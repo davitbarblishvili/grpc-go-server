@@ -6,6 +6,7 @@ import (
 	"grpc_go/greetings/calculator/calculatorpb"
 	"io"
 	"log"
+	"time"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -13,7 +14,7 @@ import (
 
 func main() {
 	fmt.Println("Calculator Client")
-	cc, err := grpc.Dial("localhost:50053", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	cc, err := grpc.Dial("localhost:50058", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("Could not connect: %v\n", err)
 	}
@@ -24,8 +25,50 @@ func main() {
 
 	//doUnary(c)
 	//doServerStreaming(c)
+	//doClientStreaming(c)
+	doBiDiStreaming(c)
+}
 
-	doClientStreaming(c)
+func doBiDiStreaming(c calculatorpb.CalculatorServiceClient) {
+	fmt.Println("Starting to do a ComputeAverage Client Streaming RPC")
+	stream, err := c.FindMaximum(context.Background())
+	if err != nil {
+		log.Fatalf("Error while creating stream: %v", err)
+	}
+
+	requests := []int32{1, 20, 3, 40, 5, 2, 75, 40, 120, 300, 3, 1200, 56}
+
+	waitc := make(chan struct{})
+
+	go func() {
+		for _, req := range requests {
+			fmt.Printf("Sending message: %v\n", req)
+			stream.Send(&calculatorpb.FindMaximumRequest{Number: req})
+			time.Sleep(1000 * time.Millisecond)
+		}
+		stream.CloseSend()
+	}()
+
+	go func() {
+		for {
+			res, err := stream.Recv()
+
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				log.Fatalf("Error while receiving: %v\n", err)
+				break
+			}
+
+			fmt.Printf("Received : %v\n", res.GetMaximum())
+		}
+		close(waitc)
+
+	}()
+
+	<-waitc
+
 }
 
 func doClientStreaming(c calculatorpb.CalculatorServiceClient) {

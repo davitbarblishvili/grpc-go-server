@@ -14,7 +14,7 @@ import (
 
 func main() {
 	fmt.Println("Hello I am a client")
-	cc, err := grpc.Dial("localhost:50055", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	cc, err := grpc.Dial("localhost:50057", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("could not connect: %v\n", err)
 	}
@@ -25,7 +25,76 @@ func main() {
 
 	//doUnary(c)
 	//doServerStreaming(c)
-	doClientStreaming(c)
+	//doClientStreaming(c)
+	doBiDiStreaming(c)
+
+}
+
+func doBiDiStreaming(c greetpb.GreetServiceClient) {
+	fmt.Println("Starting to do a BiDi Streaming RPC")
+
+	stream, err := c.GreetEveryone(context.Background())
+	if err != nil {
+		log.Fatalf("Error while creating stream: %v", err)
+	}
+	requests := []*greetpb.GreetEveryoneRequest{
+		{
+			Greeting: &greetpb.Greeting{
+				FirstName: "Davit",
+			},
+		},
+		{
+			Greeting: &greetpb.Greeting{
+				FirstName: "Ana",
+			},
+		},
+		{
+			Greeting: &greetpb.Greeting{
+				FirstName: "Mitsuki",
+			},
+		},
+		{
+			Greeting: &greetpb.Greeting{
+				FirstName: "David",
+			},
+		},
+		{
+			Greeting: &greetpb.Greeting{
+				FirstName: "Moira",
+			},
+		},
+	}
+
+	waitc := make(chan struct{})
+
+	go func() {
+		for _, req := range requests {
+			fmt.Printf("Sending message: %v\n", req)
+			stream.Send(req)
+			time.Sleep(1000 * time.Millisecond)
+		}
+		stream.CloseSend()
+	}()
+
+	go func() {
+		for {
+			res, err := stream.Recv()
+
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				log.Fatalf("Error while receiving: %v\n", err)
+				break
+			}
+
+			fmt.Printf("Received : %v\n", res.GetResult())
+		}
+		close(waitc)
+
+	}()
+
+	<-waitc
 
 }
 
