@@ -2,3 +2,6 @@ protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=p
 
 protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative calculator/calculatorpb/calculator.proto
 
+
+
+protoc --proto_path=calculator/calculatorpb --proto_path=. --dart_out=grpc:calculator/calculatorpb calculator/calculatorpb/calculator.proto

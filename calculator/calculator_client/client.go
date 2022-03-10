@@ -14,7 +14,7 @@ import (
 
 func main() {
 	fmt.Println("Calculator Client")
-	cc, err := grpc.Dial("localhost:50058", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	cc, err := grpc.Dial("localhost:50059", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("Could not connect: %v\n", err)
 	}
@@ -24,9 +24,9 @@ func main() {
 	c := calculatorpb.NewCalculatorServiceClient(cc)
 
 	//doUnary(c)
-	//doServerStreaming(c)
+	doServerStreaming(c)
 	//doClientStreaming(c)
-	doBiDiStreaming(c)
+	//doBiDiStreaming(c)
 }
 
 func doBiDiStreaming(c calculatorpb.CalculatorServiceClient) {
