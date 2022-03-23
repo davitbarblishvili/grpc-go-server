@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"grpc_go/greetings/Part_Identifier/PartIdentifierpb"
+	"grpc_go/greetings/PartIdentifier_go/PartIdentifierpb"
 	"log"
 	"net"
 	"os"
@@ -43,9 +43,13 @@ func main() {
 
 	insertPart(db, "0001", "Intermediate Shaft",
 		"https://i5.walmartimages.com/asr/dbb29ded-aea1-4bd2-865b-2392d43026f0.a1c57c0a22f983cc7e399327ae9b4081.png?odnHeight=612&odnWidth=612&odnBg=FFFFFF",
-		"68167997AB", "main_storage")
+		"68167997AB", "Storage A")
 
-	lis, err := net.Listen("tcp", ":4054")
+	insertPart(db, "0002", "Rear Shaft",
+		"https://i5.walmartimages.com/asr/6f266d9d-c6b3-4a8c-8391-8abb55cb7197.a32ccbcfa1d66ab3ed22581f78ed9bcf.jpeg?odnHeight=612&odnWidth=612&odnBg=FFFFFF",
+		"24-185981", "Storage B")
+
+	lis, err := net.Listen("tcp", ":4059")
 
 	if err != nil {
 		log.Fatalf("Failed to listen: %v", err)
