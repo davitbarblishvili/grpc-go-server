@@ -23,6 +23,7 @@ from pytorch3d.renderer import (
     MeshRenderer, 
     MeshRasterizer,  
     SoftPhongShader,
+    HardPhongShader,
     TexturesUV,
     TexturesVertex
 )
@@ -43,27 +44,27 @@ else:
 #Load a mesh and texture file
 # Set paths
 DATA_DIR = "./data"
-obj_filename = os.path.join(DATA_DIR, "cow_mesh/cow.obj")
+obj_filename = os.path.join(DATA_DIR, "obj/1594155-00-B.obj")
 
 # Load obj file
 mesh = load_objs_as_meshes([obj_filename], device=device)
 
 # Let's visualize the texture map
 
-#plt.figure(figsize=(7,7))
+plt.figure(figsize=(7,7))
 texture_image=mesh.textures.maps_padded()
-#plt.imshow(texture_image.squeeze().cpu().numpy())
-#plt.axis("off")
-#plt.show()
+plt.imshow(texture_image.squeeze().cpu().numpy())
+plt.axis("off")
+plt.show()
 
 
 # PyTorch3D has a built-in way to view the texture map 
 # with matplotlib along with the points on the map corresponding to vertices.
 
-#plt.figure(figsize=(7,7))
-#texturesuv_image_matplotlib(mesh.textures, subsample=None)
-#plt.axis("off")
-#plt.show()
+plt.figure(figsize=(7,7))
+texturesuv_image_matplotlib(mesh.textures, subsample=None)
+plt.axis("off")
+plt.show()
 
 
 
