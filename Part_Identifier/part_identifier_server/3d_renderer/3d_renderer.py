@@ -1,13 +1,12 @@
 import os
 import sys
 import torch
-import pytorch3d
 import os
 import torch
 import matplotlib.pyplot as plt
 
 # Util function for loading meshes
-from pytorch3d.io import load_objs_as_meshes, load_obj
+from pytorch3d.io import load_objs_as_meshes
 
 # Data structures and functions for rendering
 from pytorch3d.structures import Meshes
@@ -44,7 +43,7 @@ else:
 #Load a mesh and texture file
 # Set paths
 DATA_DIR = "./data"
-obj_filename = os.path.join(DATA_DIR, "obj/1594155-00-B.obj")
+obj_filename = os.path.join(DATA_DIR, "./obj/obj-1/1115833-00-A.obj")
 
 # Load obj file
 mesh = load_objs_as_meshes([obj_filename], device=device)
