@@ -6,7 +6,7 @@ import torch
 import matplotlib.pyplot as plt
 
 # Util function for loading meshes
-from pytorch3d.io import load_objs_as_meshes
+from pytorch3d.io import load_objs_as_meshes,load_obj
 
 # Data structures and functions for rendering
 from pytorch3d.structures import Meshes
@@ -31,7 +31,7 @@ from pytorch3d.renderer import (
 import sys
 import os
 sys.path.append(os.path.abspath(''))
-from utils import image_grid
+from plot_image_grid import image_grid
 
 
 if torch.cuda.is_available():
@@ -45,15 +45,32 @@ else:
 DATA_DIR = "./data"
 obj_filename = os.path.join(DATA_DIR, "./obj/1619574-00-A.obj")
 
+verts, faces_idx, _ = load_obj("/Users/dbarblishvili/go/src/grpc-go-course/Part_Identifier/part_identifier_server/3d_renderer/data/obj/1115833-00-A.obj")
+faces = faces_idx.verts_idx
+
+# Initialize each vertex to be white in color.
+verts_rgb = torch.ones_like(verts)[None]  # (1, V, 3)
+
+# Initialize each vertex to be black in color.
+# verts_rgb_colors = torch.zeros([1, len(verts), 3])
+textures = TexturesVertex(verts_features=verts_rgb.to(device))
+
+##################################################################################################
+mesh = Meshes(
+            verts=[verts.to(device)],   
+            faces=[faces.to(device)],
+            textures=textures
+        )
+
 # Load obj file
-mesh = load_objs_as_meshes([obj_filename], device=device)
+#mesh = load_objs_as_meshes([obj_filename], device=device)
 
 # Let's visualize the texture map
-plt.figure(figsize=(7,7))
-texture_image=mesh.textures.maps_padded()
-plt.imshow(texture_image.squeeze().cpu().numpy())
-plt.axis("off")
-plt.show()
+#plt.figure(figsize=(7,7))
+#texture_image=mesh.textures.maps_padded()
+#plt.imshow(texture_image.squeeze().cpu().numpy())
+#plt.axis("off")
+#plt.show()
 
 
 
@@ -61,10 +78,10 @@ plt.show()
 
 # PyTorch3D has a built-in way to view the texture map 
 # with matplotlib along with the points on the map corresponding to vertices.
-plt.figure(figsize=(7,7))
-texturesuv_image_matplotlib(mesh.textures, subsample=None)
-plt.axis("off")
-plt.show()
+#plt.figure(figsize=(7,7))
+#texturesuv_image_matplotlib(mesh.textures, subsample=None)
+#plt.axis("off")
+#plt.show()
 
 
 
