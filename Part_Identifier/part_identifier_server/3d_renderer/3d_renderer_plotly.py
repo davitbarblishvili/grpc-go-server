@@ -1,6 +1,8 @@
 import os
 import torch
 import matplotlib.pyplot as plt
+from PIL import Image
+import io
 
 # Util function for loading meshes
 from pytorch3d.io import load_objs_as_meshes, load_obj
@@ -39,9 +41,18 @@ class PartRenderer():
             self.device = torch.device("cpu")
 
     def save_png(self, fig, obj_path):
+
+        if not os.path.exists("rendered_parts"):
+            os.mkdir("rendered_parts")
+
         obj_name = obj_path.split('/')[-1]
         obj_name = obj_name.split('.')[0]
-        fig.write_image(f"./rendered_parts/{obj_name}.png")
+
+        #img_bytes = fig.to_image(format="png")
+        #image = Image.open(io.BytesIO(img_bytes))
+        #image.show()
+
+        fig.write_image(f"../part_recognition/rendered_parts/{obj_name}.png", width=1280, height=720, scale=5)
 
   
     def render_part(self, part_path, color=0.8):
@@ -71,7 +82,7 @@ class PartRenderer():
             }
         })
         self.save_png(fig, part_path)
-        fig.show()
+        #fig.show()
 
 
         '''
@@ -122,12 +133,8 @@ class PartRenderer():
 if __name__ == "__main__":
     renderer = PartRenderer()
     file_paths = generate_files()
-    count = 0
    
     for each_path in file_paths:
-        if count == 1: 
-            break
-        count += 1
         renderer.render_part(each_path)
         
 

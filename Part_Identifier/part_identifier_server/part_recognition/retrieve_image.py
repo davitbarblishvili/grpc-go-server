@@ -13,7 +13,7 @@ features = []
 img_paths = []
 for feature_path in Path("./parts_features").glob("*.npy"):
     features.append(np.load(feature_path))
-    img_paths.append(Path("./parts_dataset") / (feature_path.stem + ".png"))
+    img_paths.append(Path("./rendered_parts") / (feature_path.stem + ".png"))
 features = np.array(features)
 
 img = Image.open("./parts_test_data/1.png")

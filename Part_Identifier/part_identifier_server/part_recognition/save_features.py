@@ -6,7 +6,7 @@ import numpy as np
 if __name__ == '__main__':
     fe = FeatureExtractor()
 
-    for img_path in sorted(Path("./parts_dataset").glob("*.png")):
+    for img_path in sorted(Path("./rendered_parts").glob("*.png")):
         print(img_path) 
         feature = fe.extract(img=Image.open(img_path))
         feature_path = Path("./parts_features") / (img_path.stem + ".npy")
