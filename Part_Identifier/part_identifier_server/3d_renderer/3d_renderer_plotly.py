@@ -1,8 +1,15 @@
+from dis import dis
 import os
 import torch
 import matplotlib.pyplot as plt
 from PIL import Image
 import io
+import numpy as np
+from math import radians
+from pytorch3d.transforms import axis_angle_to_matrix
+from pytorch3d.renderer.camera_utils import camera_to_eye_at_up, rotate_on_spot
+from pytorch3d.transforms import RotateAxisAngle
+from pytorch3d.transforms import Translate
 
 # Util function for loading meshes
 from pytorch3d.io import load_objs_as_meshes, load_obj
@@ -13,6 +20,7 @@ from pytorch3d.vis.plotly_vis import AxisArgs, plot_batch_individually, plot_sce
 from pytorch3d.vis.texture_vis import texturesuv_image_matplotlib
 from pytorch3d.renderer import (
     look_at_view_transform,
+    PerspectiveCameras,
     FoVPerspectiveCameras, 
     PointLights, 
     DirectionalLights, 
@@ -57,6 +65,7 @@ class PartRenderer():
   
     def render_part(self, part_path, color=0.8):
 
+        # load object file
         verts, faces_idx, _ = load_obj(part_path)
         faces = faces_idx.verts_idx
 
@@ -69,65 +78,40 @@ class PartRenderer():
 
         ##################################################################################################
 
+        # generate mesh
         mesh = Meshes(
             verts=[verts.to(self.device)],   
             faces=[faces.to(self.device)],
             textures=textures
         )
 
+        # define rotation axis and angle
+        rot_x = RotateAxisAngle(270,'X', device=self.device)
+        rot_y = RotateAxisAngle(90,'Y', device=self.device)
+        rot_z = RotateAxisAngle(90,'Z', device=self.device)
+        verts_b = rot_z.transform_points(mesh.verts_list()[0])
+
+        trans = Translate(0,0,5, device=self.device)
+        verts_b = trans.transform_points(verts_b)
+
+        # reinitialize the mesh with new orientation
+        mesh_b = Meshes(verts=[verts_b], faces=[faces], textures=textures)
+
+    
         # Render the plotly figure
         fig = plot_scene({
             "subplot1": {
-                "part_mesh": mesh
-            }
-        })
-        self.save_png(fig, part_path)
-        #fig.show()
-
-
-        '''
-        # Create a Meshes object
-        mesh = Meshes(
-            verts=[verts.to(self.device)],   
-            faces=[faces.to(self.device)],
-            textures=textures
+                "mesh_trace_title": mesh_b,
+            }, 
+        
+        }, 
         )
-        # Render the plotly figure
-        fig = plot_scene({
-            "subplot1": {
-                "part_mesh": mesh
-            }
-        })
-        fig.show()
-       
 
-       
-        mesh_batch = Meshes(
-            verts=[verts.to(self.device), (verts + 2).to(self.device)],   
-            faces=[faces.to(self.device), faces.to(self.device)]
-        )
-        fig = plot_scene({
-            "subplot1": {
-                "part_mesh1": mesh_batch[0],
-                "part_mesh2": mesh_batch[1]
-            }
-        })
+        # save 2d image
+        #self.save_png(fig, part_path)
         fig.show()
 
-       
-
-        fig2 = plot_scene({
-            "part_plot1": {
-                "part": mesh_batch
-            }
-        },
-            xaxis={"backgroundcolor":"rgb(200, 200, 230)"},
-            yaxis={"backgroundcolor":"rgb(230, 200, 200)"},
-            zaxis={"backgroundcolor":"rgb(200, 230, 200)"}, 
-            axis_args=AxisArgs(showgrid=True))
-        fig2.show()
-        '''
-
+        
 
 
 if __name__ == "__main__":
@@ -136,5 +120,6 @@ if __name__ == "__main__":
    
     for each_path in file_paths:
         renderer.render_part(each_path)
+        break
         
 
