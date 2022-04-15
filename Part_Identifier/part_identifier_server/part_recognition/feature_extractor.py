@@ -2,6 +2,8 @@ from tensorflow.keras.preprocessing import image
 from tensorflow.keras.applications.vgg16 import VGG16, preprocess_input
 from tensorflow.keras.models import Model
 import numpy as np
+from PIL import Image
+import numpy 
 
 
 class FeatureExtractor:
@@ -12,7 +14,8 @@ class FeatureExtractor:
         self.model = Model(inputs=base_model.input, outputs=base_model.get_layer('fc1').output)
     def extract(self, img):
         # Resize the image
-        img = img.resize((224, 224))
+        img = np.resize(img, (224, 224),)
+        img = Image.fromarray(numpy.uint8(img))
         # Convert the image color space
         img = img.convert('RGB')
         # Reformat the image

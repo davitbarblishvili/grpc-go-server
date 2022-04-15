@@ -1,54 +1,45 @@
-from dis import dis
-import os
-import torch
-import matplotlib.pyplot as plt
-from PIL import Image
-import io
-import numpy as np
-from math import radians
-from pytorch3d.transforms import axis_angle_to_matrix
-from pytorch3d.renderer.camera_utils import camera_to_eye_at_up, rotate_on_spot
-from pytorch3d.transforms import RotateAxisAngle
-from pytorch3d.transforms import Translate
-
-# Util function for loading meshes
-from pytorch3d.io import load_objs_as_meshes, load_obj
-
-# Data structures and functions for rendering
-from pytorch3d.structures import Meshes
-from pytorch3d.vis.plotly_vis import AxisArgs, plot_batch_individually, plot_scene
-from pytorch3d.vis.texture_vis import texturesuv_image_matplotlib
-from pytorch3d.renderer import (
-    look_at_view_transform,
-    PerspectiveCameras,
-    FoVPerspectiveCameras, 
-    PointLights, 
-    DirectionalLights, 
-    Materials, 
-    RasterizationSettings, 
-    MeshRenderer, 
-    MeshRasterizer,  
-    SoftPhongShader,
-    TexturesUV,
-    TexturesVertex
-)
-
-# add path for demo utils functions 
 import sys
 import os
 from generate_file_paths import generate_files
 sys.path.append(os.path.abspath(''))
+import torch
+from pytorch3d.transforms import RotateAxisAngle
+from pytorch3d.transforms import Translate
+from pytorch3d.io import load_obj
+from pytorch3d.structures import Meshes
+from pytorch3d.vis.plotly_vis import plot_scene
+from pytorch3d.renderer import TexturesVertex
+
 
 
 class PartRenderer():
     def __init__(self):
+        self.count = 0
         if torch.cuda.is_available():
             self.device = torch.device("cuda:0")
             torch.cuda.set_device(self.device)
         else:
             self.device = torch.device("cpu")
 
+    def generate_orientation(self, mesh, faces, textures):
+        # define rotation axis and angle
+        different_orientations = []
+        
+        for i in range(1, 4):
+            for axis in ['X', 'Y', 'Z']:
+                rot_axis = RotateAxisAngle(90 * i,axis, device=self.device)
+                verts_b = rot_axis.transform_points(mesh.verts_list()[0])
+                trans = Translate(0,0,5, device=self.device)
+                verts_b = trans.transform_points(verts_b)
+                mesh_b = Meshes(verts=[verts_b], faces=[faces], textures=textures)
+                different_orientations.append(mesh_b)
+
+        return different_orientations
+        
+
     def save_png(self, fig, obj_path):
+        if self.count == 4: 
+            self.count = 0
 
         if not os.path.exists("rendered_parts"):
             os.mkdir("rendered_parts")
@@ -60,7 +51,8 @@ class PartRenderer():
         #image = Image.open(io.BytesIO(img_bytes))
         #image.show()
 
-        fig.write_image(f"../part_recognition/rendered_parts/{obj_name}.png", width=1280, height=720, scale=5)
+        fig.write_image(f"../part_recognition/rendered_parts/{obj_name}_{self.count}.png", width=1280, height=720, scale=5)
+        self.count += 1
 
   
     def render_part(self, part_path, color=0.8):
@@ -85,41 +77,29 @@ class PartRenderer():
             textures=textures
         )
 
-        # define rotation axis and angle
-        rot_x = RotateAxisAngle(270,'X', device=self.device)
-        rot_y = RotateAxisAngle(90,'Y', device=self.device)
-        rot_z = RotateAxisAngle(90,'Z', device=self.device)
-        verts_b = rot_z.transform_points(mesh.verts_list()[0])
+        new_meshes = self.generate_orientation(mesh, faces, textures)
+        print(len(new_meshes))
 
-        trans = Translate(0,0,5, device=self.device)
-        verts_b = trans.transform_points(verts_b)
-
-        # reinitialize the mesh with new orientation
-        mesh_b = Meshes(verts=[verts_b], faces=[faces], textures=textures)
-
-    
+        
         # Render the plotly figure
-        fig = plot_scene({
-            "subplot1": {
-                "mesh_trace_title": mesh_b,
+        for new_mesh in new_meshes:
+            fig = plot_scene({
+                "subplot1": {
+                    "mesh_trace_title": new_mesh,
+                }, 
             }, 
-        
-        }, 
-        )
+            )
 
-        # save 2d image
-        #self.save_png(fig, part_path)
-        fig.show()
+            # save 2d image
+            self.save_png(fig, part_path)
+            #fig.show()
 
         
-
-
 if __name__ == "__main__":
     renderer = PartRenderer()
     file_paths = generate_files()
    
     for each_path in file_paths:
         renderer.render_part(each_path)
-        break
         
 
