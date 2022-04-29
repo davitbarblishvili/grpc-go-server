@@ -9,6 +9,7 @@ from pytorch3d.io import load_obj
 from pytorch3d.structures import Meshes
 from pytorch3d.vis.plotly_vis import plot_scene
 from pytorch3d.renderer import TexturesVertex
+from loguru import logger
 
 
 
@@ -38,7 +39,7 @@ class PartRenderer():
         
 
     def save_png(self, fig, obj_path):
-        if self.count == 4: 
+        if self.count == 9: 
             self.count = 0
 
         if not os.path.exists("rendered_parts"):
@@ -47,12 +48,11 @@ class PartRenderer():
         obj_name = obj_path.split('/')[-1]
         obj_name = obj_name.split('.')[0]
 
-        #img_bytes = fig.to_image(format="png")
-        #image = Image.open(io.BytesIO(img_bytes))
-        #image.show()
 
         fig.write_image(f"../part_recognition/rendered_parts/{obj_name}_{self.count}.png", width=1280, height=720, scale=5)
         self.count += 1
+
+        logger.info(f"Storing orientation -> {self.count} of image -> {obj_name}")
 
   
     def render_part(self, part_path, color=0.8):
@@ -78,14 +78,12 @@ class PartRenderer():
         )
 
         new_meshes = self.generate_orientation(mesh, faces, textures)
-        print(len(new_meshes))
 
-        
         # Render the plotly figure
         for new_mesh in new_meshes:
             fig = plot_scene({
-                "subplot1": {
-                    "mesh_trace_title": new_mesh,
+                "": {
+                    "": new_mesh,
                 }, 
             }, 
             )
@@ -97,9 +95,14 @@ class PartRenderer():
         
 if __name__ == "__main__":
     renderer = PartRenderer()
+    logger.info("Started Loading Images")
     file_paths = generate_files()
+    logger.info("Completed Loading Images")
    
+    count = 0
     for each_path in file_paths:
         renderer.render_part(each_path)
+
+    logger.info("Completed Saving Rendered Images")
         
 
